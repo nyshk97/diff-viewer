@@ -1,27 +1,34 @@
 # Diff Viewer 実装計画
 
-## 開発環境
+> **凡例:** 手動作業が必要なステップには 🔧 を付けている（Xcode の GUI 操作、インストール作業など）
 
-- Xcode（Mac App Store からインストール）
-- Swift / SwiftUI + AppKit（NSPanel）
-- macOS 26.3.1 以降
+## ~~フェーズ 0: 開発環境の準備~~ ✅ 完了
 
-### 開発の流れ
+~~**ゴール:** Xcode でアプリをビルド＆実行できる状態~~
 
-1. Xcode で macOS App プロジェクトを作成（SwiftUI, Swift）
-2. Xcode 上で `Cmd + R` でビルド＆実行して動作確認
-3. コード変更 → `Cmd + R` で再実行、を繰り返す
+1. ~~🔧 **Xcode をインストール**~~ ✅
+2. ~~🔧 **Xcode Command Line Tools を確認**~~ ✅
 
-## フェーズ構成
+### Xcode の基本操作（初めての人向け）
 
-### フェーズ 1: プロジェクト作成とランチャーモードの土台
+- **プロジェクトを開く:** `.xcodeproj` ファイルをダブルクリック、または Xcode の File → Open
+- **ビルド＆実行:** `Cmd + R`（アプリがビルドされて起動する）
+- **ビルドだけ:** `Cmd + B`（実行はしない）
+- **停止:** `Cmd + .`（実行中のアプリを止める）
+- **ファイル編集:** 左のファイルツリーからファイルを選んでエディタで編集
+- **エラー確認:** ビルドに失敗すると左のナビゲーターにエラーが表示される
+- **コンソール出力:** 画面下部のデバッグエリアに `print()` の出力が表示される（表示されていなければ `Cmd + Shift + C`）
+
+## フェーズ 1: プロジェクト作成とランチャーモードの土台
 
 **ゴール:** ショートカットキーで空のウィンドウがトグル表示される状態
 
-1. Xcode で macOS App プロジェクトを作成
-2. `Info.plist` に `LSUIElement = YES` を設定（Dock に表示しない）
-3. `MenuBarExtra` でメニューバーにアイコンを表示（終了ボタンのみ）
-4. `NSPanel` のサブクラスを作成
+1. ~~🔧 **Xcode でプロジェクトを新規作成**~~ ✅
+2. ~~🔧 **App Sandbox を無効にする**~~ ✅
+3. ~~🔧 **KeyboardShortcuts ライブラリを追加**~~ ✅
+4. `Info.plist` に `LSUIElement = YES` を設定（Dock に表示しない）
+5. `MenuBarExtra` でメニューバーにアイコンを表示（終了ボタンのみ）
+6. `NSPanel` のサブクラスを作成
    - `styleMask`: `.nonactivatingPanel`, `.titled`, `.fullSizeContentView`
    - `isFloatingPanel = true`
    - `level = .floating`
@@ -29,26 +36,30 @@
    - `titleVisibility = .hidden`, `titlebarAppearsTransparent = true`
    - `hidesOnDeactivate = false`（ショートカットでのみ閉じる）
    - `isReleasedWhenClosed = false`
-5. ウィンドウサイズを画面の 80% に設定し、中央に配置
-6. グローバルショートカット `Cmd + Ctrl + D` でパネルをトグル表示
-   - ライブラリ: [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts)（Swift Package Manager で追加）
-7. パネル内に SwiftUI ビューを `NSHostingView` でホスト
+7. ウィンドウサイズを画面の 80% に設定し、中央に配置
+8. グローバルショートカット `Cmd + Ctrl + D` でパネルをトグル表示
+9. パネル内に SwiftUI ビューを `NSHostingView` でホスト
+10. 🔧 **動作確認:** Xcode で `Cmd + R` を押してビルド＆実行し、`Cmd + Ctrl + D` でウィンドウが出ることを確認
 
 ### フェーズ 2: 設定ファイルの読み込み
 
 **ゴール:** `~/.config/diff-viewer/config.json` からリポジトリ一覧を読める状態
 
-1. 設定ファイルの JSON 構造を定義
-   ```json
-   {
-     "repositories": [
-       "/Users/d0ne1s/project-a",
-       "/Users/d0ne1s/project-b"
-     ]
-   }
-   ```
-2. `Codable` な構造体で設定をデコード
-3. ファイルが存在しない場合のエラーハンドリング
+1. 🔧 **設定ファイルを作成する**
+   - ターミナルで `mkdir -p ~/.config/diff-viewer` を実行
+   - `~/.config/diff-viewer/config.json` を以下の内容で作成:
+     ```json
+     {
+       "repositories": [
+         "/Users/d0ne1s/project-a",
+         "/Users/d0ne1s/project-b"
+       ]
+     }
+     ```
+   - パスは自分の監視したいリポジトリに書き換える
+2. 設定ファイルの JSON 構造を定義
+3. `Codable` な構造体で設定をデコード
+4. ファイルが存在しない場合のエラーハンドリング
 
 ### フェーズ 3: Git diff の取得とパース
 
@@ -129,6 +140,22 @@ DiffViewer/
 | ライブラリ | 用途 | 追加方法 |
 |---|---|---|
 | [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) | グローバルショートカット | Swift Package Manager |
+
+## 手動作業まとめ
+
+全フェーズを通して、手動作業（🔧）が必要な箇所の一覧:
+
+| タイミング | 作業内容 |
+|---|---|
+| フェーズ 0-1 | Xcode を Mac App Store からインストール（約30GB） |
+| フェーズ 0-2 | Xcode Command Line Tools の確認/インストール |
+| フェーズ 1-1 | Xcode でプロジェクトを新規作成 |
+| フェーズ 1-2 | Xcode で App Sandbox を無効化 |
+| フェーズ 1-3 | Xcode で KeyboardShortcuts パッケージを追加 |
+| フェーズ 1-10 | Xcode でビルド＆実行して動作確認 |
+| フェーズ 2-1 | 設定ファイル `~/.config/diff-viewer/config.json` を作成 |
+
+それ以外のステップは全てコード変更のみで完結する。
 
 ## 注意点
 

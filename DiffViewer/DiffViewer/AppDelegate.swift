@@ -8,9 +8,10 @@ extension KeyboardShortcuts.Name {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: FloatingPanel?
+    let viewModel = DiffViewModel()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let hostingView = NSHostingView(rootView: ContentView())
+        let hostingView = NSHostingView(rootView: ContentView(viewModel: viewModel))
         panel = FloatingPanel(contentView: hostingView)
 
         KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
@@ -24,6 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if panel.isVisible {
             panel.orderOut(nil)
         } else {
+            viewModel.loadDiffs()
             panel.centerOnScreen()
             panel.makeKeyAndOrderFront(nil)
         }

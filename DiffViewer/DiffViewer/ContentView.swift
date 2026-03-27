@@ -1,16 +1,30 @@
 import SwiftUI
 
 struct ContentView: View {
+    var viewModel: DiffViewModel
+
     var body: some View {
         ZStack {
-            Color(nsColor: NSColor(red: 13/255, green: 17/255, blue: 23/255, alpha: 1))
-            Text("Diff Viewer")
-                .font(.system(size: 24, weight: .bold, design: .monospaced))
-                .foregroundColor(Color(red: 230/255, green: 237/255, blue: 243/255))
+            GitHubDark.background.ignoresSafeArea()
+
+            if viewModel.isLoading {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .tint(GitHubDark.textSecondary)
+            } else if let errorMessage = viewModel.errorMessage {
+                EmptyStateView(message: errorMessage)
+            } else if viewModel.repositories.allSatisfy({ !$0.hasChanges }) {
+                EmptyStateView(message: "変更なし")
+            } else {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        ForEach(viewModel.repositories.filter(\.hasChanges)) { repo in
+                            RepositorySection(repository: repo)
+                        }
+                    }
+                    .padding(20)
+                }
+            }
         }
     }
-}
-
-#Preview {
-    ContentView()
 }

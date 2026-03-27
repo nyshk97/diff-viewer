@@ -1,17 +1,15 @@
-//
-//  DiffViewerApp.swift
-//  DiffViewer
-//
-//  Created by tsubasa namatame on 2026/03/27.
-//
-
 import SwiftUI
 
 @main
 struct DiffViewerApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        MenuBarExtra("DiffViewer", systemImage: "doc.text.magnifyingglass") {
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
+            .keyboardShortcut("q")
         }
     }
 }

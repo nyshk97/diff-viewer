@@ -41,6 +41,8 @@ struct FileDiffView: View {
                         Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
                             .font(.system(size: 11))
                             .foregroundColor(showCopied ? GitHubDark.additionText : GitHubDark.textSecondary)
+                            .frame(width: 28, height: 28)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
 

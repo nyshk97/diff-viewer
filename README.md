@@ -1,17 +1,19 @@
 # DiffViewer
 
-複数のローカル Git リポジトリの差分をまとめて確認できる macOS アプリ。
-グローバルショートカット（`Cmd + Ctrl + D`）でいつでも呼び出せるランチャー型の diff ビューア。
+A macOS app to view Git diffs across multiple local repositories at a glance.
+Launcher-style diff viewer that can be summoned anytime with a global shortcut (`Cmd + Ctrl + D`).
 
-## インストール
+![DiffViewer Screenshot](docs/screenshot.png)
+
+## Install
 
 ```
 brew install nyshk97/tap/diff-viewer
 ```
 
-## セットアップ
+## Setup
 
-監視したいリポジトリのパスを設定ファイルに記述する。
+Add the paths of the repositories you want to monitor to the config file.
 
 ```
 mkdir -p ~/.config/diff-viewer
@@ -27,8 +29,8 @@ mkdir -p ~/.config/diff-viewer
 }
 ```
 
-## 使い方
+## Usage
 
-1. アプリを起動する（メニューバーに常駐）
-2. `Cmd + Ctrl + D` でパネルを表示
-3. もう一度 `Cmd + Ctrl + D` で閉じる
+1. Launch the app (it stays in the menu bar)
+2. Press `Cmd + Ctrl + D` to show the panel
+3. Press `Cmd + Ctrl + D` again to dismiss

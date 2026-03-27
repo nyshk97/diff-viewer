@@ -25,12 +25,18 @@ mkdir -p ~/.config/diff-viewer
   "repositories": [
     "/Users/you/project-a",
     "/Users/you/project-b"
-  ]
+  ],
+  "shortcut": {
+    "key": "d",
+    "modifiers": ["command", "control"]
+  }
 }
 ```
+
+The `shortcut` field is optional (defaults to `Cmd + Ctrl + D`). Available modifiers: `command`, `control`, `option`, `shift`. Changing the shortcut requires an app restart.
 
 ## Usage
 
 1. Launch the app (it stays in the menu bar)
-2. Press `Cmd + Ctrl + D` to show the panel
-3. Press `Cmd + Ctrl + D` again to dismiss
+2. Press `Cmd + Ctrl + D` (or your custom shortcut) to show the panel
+3. Press the same shortcut again to dismiss

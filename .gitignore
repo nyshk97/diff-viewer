@@ -1,3 +1,6 @@
 # Xcode user-specific files
 xcuserdata/
 *.xcuserstate
+
+# Build output
+build/

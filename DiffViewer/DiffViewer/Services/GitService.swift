@@ -13,12 +13,12 @@ enum GitService {
     }
 
     nonisolated private static func fetchUntrackedFiles(at repoPath: String) -> [FileDiff] {
-        let output = runGit(["status", "--porcelain"], at: repoPath)
+        let output = runGit(["ls-files", "--others", "--exclude-standard"], at: repoPath)
         guard !output.isEmpty else { return [] }
 
         return output.components(separatedBy: "\n").compactMap { line in
-            guard line.hasPrefix("?? ") else { return nil }
-            let fileName = String(line.dropFirst(3))
+            let fileName = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !fileName.isEmpty else { return nil }
 
             let filePath = (repoPath as NSString).appendingPathComponent(fileName)
             guard let content = try? String(contentsOfFile: filePath, encoding: .utf8) else { return nil }

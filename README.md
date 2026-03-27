@@ -39,4 +39,4 @@ The `shortcut` field is optional (defaults to `Cmd + Ctrl + D`). Available modif
 
 1. Launch the app (it stays in the menu bar)
 2. Press `Cmd + Ctrl + D` (or your custom shortcut) to show the panel
-3. Press the same shortcut again to dismiss
+3. Press the same shortcut or `Esc` to dismiss

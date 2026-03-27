@@ -3,6 +3,7 @@ import SwiftUI
 struct FileDiffView: View {
     let file: FileDiff
     @State private var isExpanded = true
+    @State private var showCopied = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,6 +28,21 @@ struct FileDiffView: View {
                     Text(file.fileName)
                         .font(.system(size: 13, weight: .medium, design: .monospaced))
                         .foregroundColor(GitHubDark.text)
+
+                    Button(action: {
+                        let pathToCopy = file.fileName.replacingOccurrences(of: " (new)", with: "")
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(pathToCopy, forType: .string)
+                        showCopied = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            showCopied = false
+                        }
+                    }) {
+                        Image(systemName: showCopied ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 11))
+                            .foregroundColor(showCopied ? GitHubDark.additionText : GitHubDark.textSecondary)
+                    }
+                    .buttonStyle(.plain)
 
                     Spacer()
                 }

@@ -59,7 +59,7 @@ struct FileDiffView: View {
 
                 VStack(spacing: 0) {
                     ForEach(file.hunks) { hunk in
-                        SideBySideDiffView(hunk: hunk)
+                        SideBySideDiffView(hunk: hunk, fileName: file.fileName)
                     }
                 }
             }

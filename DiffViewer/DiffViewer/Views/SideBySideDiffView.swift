@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SideBySideDiffView: View {
     let hunk: DiffHunk
+    let fileName: String
 
     var body: some View {
         let pairs = buildSideBySidePairs(hunk.lines)
@@ -38,31 +39,22 @@ struct SideBySideDiffView: View {
 
     private func lineContent(_ line: DiffLine?) -> some View {
         let bg: Color
-        let fg: Color
-        let content: String
+        let highlighted: AttributedString
 
         if let line {
             switch line.type {
-            case .addition:
-                bg = GitHubDark.additionBackground
-                fg = GitHubDark.additionText
-            case .deletion:
-                bg = GitHubDark.deletionBackground
-                fg = GitHubDark.deletionText
-            case .context:
-                bg = .clear
-                fg = GitHubDark.text
+            case .addition: bg = GitHubDark.additionBackground
+            case .deletion: bg = GitHubDark.deletionBackground
+            case .context: bg = .clear
             }
-            content = line.content
+            highlighted = SyntaxHighlighter.highlight(line.content, fileName: fileName)
         } else {
             bg = GitHubDark.surfaceBackground
-            fg = .clear
-            content = ""
+            highlighted = AttributedString("")
         }
 
-        return Text(content)
+        return Text(highlighted)
             .font(.system(size: 12, design: .monospaced))
-            .foregroundColor(fg)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .background(bg)

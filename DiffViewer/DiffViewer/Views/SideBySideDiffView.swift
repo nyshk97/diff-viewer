@@ -55,6 +55,7 @@ struct SideBySideDiffView: View {
 
         return Text(highlighted)
             .font(.system(size: 12, design: .monospaced))
+            .textSelection(.enabled)
             .padding(.horizontal, 8)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .background(bg)

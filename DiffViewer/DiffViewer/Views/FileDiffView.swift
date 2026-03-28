@@ -25,20 +25,26 @@ struct FileDiffView: View {
                                 .fill(file.stage == .staged ? GitHubDark.stagedBadge : GitHubDark.unstagedBadge)
                         )
 
+                    if let renamedFrom = file.renamedFrom {
+                        Text(renamedFrom)
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .foregroundColor(GitHubDark.textSecondary)
+                            .strikethrough(color: GitHubDark.textSecondary)
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 10))
+                            .foregroundColor(GitHubDark.textSecondary)
+                    }
+
                     Text(file.fileName)
                         .font(.system(size: 13, weight: .medium, design: .monospaced))
                         .foregroundColor(GitHubDark.text)
 
                     if file.isNew {
-                        Text("NEW")
-                            .font(.system(size: 9, weight: .bold, design: .monospaced))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(
-                                RoundedRectangle(cornerRadius: 3)
-                                    .fill(GitHubDark.additionText)
-                            )
+                        fileBadge("NEW", color: GitHubDark.additionText)
+                    } else if file.isDeleted {
+                        fileBadge("DELETED", color: GitHubDark.deletionText)
+                    } else if file.renamedFrom != nil {
+                        fileBadge("RENAMED", color: GitHubDark.unstagedBadge)
                     }
 
                     Button(action: {
@@ -90,5 +96,17 @@ struct FileDiffView: View {
                 .stroke(GitHubDark.border, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func fileBadge(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.system(size: 9, weight: .bold, design: .monospaced))
+            .foregroundColor(.white)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1)
+            .background(
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(color)
+            )
     }
 }

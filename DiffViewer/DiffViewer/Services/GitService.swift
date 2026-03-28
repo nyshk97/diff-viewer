@@ -4,10 +4,13 @@ enum GitService {
     nonisolated static func fetchDiffs(for config: Config) -> [RepositoryDiff] {
         config.repositories.compactMap { path in
             let name = URL(fileURLWithPath: path).lastPathComponent
-            let unstagedFiles = parseDiff(runGit(["diff"], at: path), stage: .unstaged)
-            let stagedFiles = parseDiff(runGit(["diff", "--staged"], at: path), stage: .staged)
+            let unstagedFiles = parseDiff(runGit(["diff", "-M"], at: path), stage: .unstaged)
+            let stagedFiles = parseDiff(runGit(["diff", "--staged", "-M"], at: path), stage: .staged)
+            let diffFileNames = Set((unstagedFiles + stagedFiles).map { $0.fileName })
+            let deletedFiles = fetchDeletedFiles(at: path).filter { !diffFileNames.contains($0.fileName) }
             let untrackedFiles = fetchUntrackedFiles(at: path)
-            let files = unstagedFiles + stagedFiles + untrackedFiles
+            let (matched, remainingDeleted, remainingNew) = matchRenames(deleted: deletedFiles, untracked: untrackedFiles, repoPath: path)
+            let files = unstagedFiles + stagedFiles + matched + remainingDeleted + remainingNew
             return RepositoryDiff(name: name, path: path, files: files)
         }
     }
@@ -30,8 +33,38 @@ enum GitService {
 
             guard !diffLines.isEmpty else { return nil }
             let hunk = DiffHunk(header: "@@ -0,0 +1,\(diffLines.count) @@", lines: diffLines)
-            return FileDiff(fileName: fileName, hunks: [hunk], stage: .unstaged, isNew: true)
+            return FileDiff(fileName: fileName, hunks: [hunk], stage: .unstaged, isNew: true, renamedFrom: nil, isDeleted: false)
         }
+    }
+
+    nonisolated private static func fetchDeletedFiles(at repoPath: String) -> [FileDiff] {
+        let output = runGit(["ls-files", "--deleted"], at: repoPath)
+        guard !output.isEmpty else { return [] }
+
+        return output.components(separatedBy: "\n").compactMap { line in
+            let fileName = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !fileName.isEmpty else { return nil }
+            return FileDiff(fileName: fileName, hunks: [], stage: .unstaged, isNew: false, renamedFrom: nil, isDeleted: true)
+        }
+    }
+
+    nonisolated private static func matchRenames(deleted: [FileDiff], untracked: [FileDiff], repoPath: String) -> (matched: [FileDiff], remainingDeleted: [FileDiff], remainingNew: [FileDiff]) {
+        var remainingDeleted = deleted
+        var remainingNew = untracked
+        var matched: [FileDiff] = []
+
+        for newFile in untracked {
+            guard let deleteIndex = remainingDeleted.firstIndex(where: {
+                ($0.fileName as NSString).lastPathComponent == (newFile.fileName as NSString).lastPathComponent
+            }) else { continue }
+
+            let deletedFile = remainingDeleted[deleteIndex]
+            matched.append(FileDiff(fileName: newFile.fileName, hunks: newFile.hunks, stage: .unstaged, isNew: false, renamedFrom: deletedFile.fileName, isDeleted: false))
+            remainingDeleted.remove(at: deleteIndex)
+            remainingNew.removeAll { $0.fileName == newFile.fileName }
+        }
+
+        return (matched, remainingDeleted, remainingNew)
     }
 
     nonisolated private static func runGit(_ args: [String], at path: String) -> String {
@@ -60,6 +93,8 @@ enum GitService {
 
         var files: [FileDiff] = []
         var currentFileName: String?
+        var currentRenamedFrom: String?
+        var currentIsDeleted = false
         var currentHunks: [DiffHunk] = []
         var currentHunkHeader: String = ""
         var currentLines: [DiffLine] = []
@@ -75,19 +110,33 @@ enum GitService {
 
         func flushFile() {
             flushHunk()
-            if let fileName = currentFileName, !currentHunks.isEmpty {
-                files.append(FileDiff(fileName: fileName, hunks: currentHunks, stage: stage, isNew: false))
+            if let fileName = currentFileName {
+                if !currentHunks.isEmpty || currentRenamedFrom != nil || currentIsDeleted {
+                    files.append(FileDiff(fileName: fileName, hunks: currentHunks, stage: stage, isNew: false, renamedFrom: currentRenamedFrom, isDeleted: currentIsDeleted))
+                }
             }
             currentHunks = []
             currentFileName = nil
+            currentRenamedFrom = nil
+            currentIsDeleted = false
         }
 
         for line in output.components(separatedBy: "\n") {
             if line.hasPrefix("diff --git") {
                 flushFile()
+            } else if line.hasPrefix("rename from ") {
+                currentRenamedFrom = String(line.dropFirst(12))
+            } else if line.hasPrefix("rename to ") {
+                currentFileName = String(line.dropFirst(10))
+            } else if line.hasPrefix("+++ /dev/null") {
+                currentIsDeleted = true
             } else if line.hasPrefix("+++ b/") {
                 currentFileName = String(line.dropFirst(6))
-            } else if line.hasPrefix("--- a/") || line.hasPrefix("--- /dev/null") || line.hasPrefix("+++ /dev/null") {
+            } else if line.hasPrefix("--- a/") {
+                if currentFileName == nil {
+                    currentFileName = String(line.dropFirst(6))
+                }
+            } else if line.hasPrefix("--- /dev/null") {
                 continue
             } else if line.hasPrefix("@@") {
                 flushHunk()

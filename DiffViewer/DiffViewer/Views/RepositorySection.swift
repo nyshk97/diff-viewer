@@ -21,7 +21,7 @@ struct RepositorySection: View {
 
             // File diffs
             ForEach(repository.files) { file in
-                FileDiffView(file: file)
+                FileDiffView(file: file, repoPath: repository.path)
             }
         }
     }

@@ -2,8 +2,16 @@ import SwiftUI
 
 struct FileDiffView: View {
     let file: FileDiff
+    let repoPath: String
     @State private var isExpanded = true
     @State private var showCopied = false
+    @State private var showFullFile = false
+    @State private var fullFileHunks: [DiffHunk]?
+    @State private var isLoadingFullFile = false
+
+    private var canShowFullFile: Bool {
+        file.changeType != .new
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -69,6 +77,25 @@ struct FileDiffView: View {
                         }
                     }
 
+                    if canShowFullFile {
+                        Button(action: { toggleFullFile() }) {
+                            Image(systemName: showFullFile ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 11))
+                                .foregroundColor(showFullFile ? GitHubDark.additionText : GitHubDark.textSecondary)
+                                .frame(width: 28, height: 28)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .help(showFullFile ? "差分のみ表示" : "ファイル全体を表示")
+                        .onHover { hovering in
+                            if hovering {
+                                NSCursor.pointingHand.push()
+                            } else {
+                                NSCursor.pop()
+                            }
+                        }
+                    }
+
                     Spacer()
                 }
                 .padding(.horizontal, 12)
@@ -82,9 +109,16 @@ struct FileDiffView: View {
                     .fill(GitHubDark.border)
                     .frame(height: 1)
 
-                VStack(spacing: 0) {
-                    ForEach(file.hunks) { hunk in
-                        SideBySideDiffView(hunk: hunk, fileName: file.fileName)
+                if isLoadingFullFile {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .background(GitHubDark.background)
+                } else {
+                    let hunksToShow = showFullFile ? (fullFileHunks ?? file.hunks) : file.hunks
+                    VStack(spacing: 0) {
+                        ForEach(hunksToShow) { hunk in
+                            SideBySideDiffView(hunk: hunk, fileName: file.fileName)
+                        }
                     }
                 }
             }
@@ -94,6 +128,29 @@ struct FileDiffView: View {
                 .stroke(GitHubDark.border, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func toggleFullFile() {
+        showFullFile.toggle()
+        if showFullFile && fullFileHunks == nil {
+            isLoadingFullFile = true
+            let fileName = file.fileName
+            let stage = file.stage
+            let changeType = file.changeType
+            let path = repoPath
+            Task.detached {
+                let hunks = GitService.fetchFullFileDiff(
+                    fileName: fileName,
+                    repoPath: path,
+                    stage: stage,
+                    changeType: changeType
+                )
+                await MainActor.run {
+                    fullFileHunks = hunks
+                    isLoadingFullFile = false
+                }
+            }
+        }
     }
 
     private func fileBadge(_ text: String, color: Color) -> some View {

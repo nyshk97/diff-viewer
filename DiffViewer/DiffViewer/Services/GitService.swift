@@ -171,6 +171,36 @@ enum GitService {
         return files
     }
 
+    nonisolated static func fetchFullFileDiff(fileName: String, repoPath: String, stage: DiffStage, changeType: FileChangeType) -> [DiffHunk] {
+        let args: [String]
+        switch stage {
+        case .unstaged:
+            args = ["diff", "-U99999", "--", fileName]
+        case .staged:
+            args = ["diff", "--staged", "-U99999", "--", fileName]
+        }
+
+        let output = runGit(args, at: repoPath)
+        let files = parseDiff(output, stage: stage)
+
+        if let file = files.first {
+            return file.hunks
+        }
+
+        // Fallback for deleted files: show old content as all deletions
+        if changeType == .deleted {
+            let content = runGit(["show", "HEAD:\(fileName)"], at: repoPath)
+            guard !content.isEmpty else { return [] }
+            let lines = content.components(separatedBy: "\n")
+            let diffLines = lines.enumerated().map { index, text in
+                DiffLine(oldLineNumber: index + 1, newLineNumber: nil, content: text, type: .deletion)
+            }
+            return [DiffHunk(header: "@@ -1,\(diffLines.count) +0,0 @@", lines: diffLines)]
+        }
+
+        return []
+    }
+
     nonisolated private static func parseHunkHeader(_ header: String) -> (oldStart: Int, newStart: Int) {
         guard let match = hunkHeaderRegex.firstMatch(in: header, range: NSRange(header.startIndex..., in: header)),
               let oldRange = Range(match.range(at: 1), in: header),

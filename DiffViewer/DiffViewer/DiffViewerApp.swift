@@ -5,7 +5,7 @@ struct DiffViewerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        MenuBarExtra("DiffViewer", systemImage: "doc.text.magnifyingglass") {
+        MenuBarExtra("DiffViewer", systemImage: "chevron.left.forwardslash.chevron.right") {
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }

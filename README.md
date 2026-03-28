@@ -3,6 +3,8 @@
 A macOS app to view Git diffs across multiple local repositories at a glance.
 Launcher-style diff viewer that can be summoned anytime with a global shortcut (`Cmd + Ctrl + D`).
 
+The panel floats above all windows, including fullscreen apps — no need to switch desktops or break your workflow.
+
 ![DiffViewer Screenshot](docs/screenshot.png)
 
 ## Install

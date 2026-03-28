@@ -7,7 +7,6 @@ struct FileDiffView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // File header
             Button(action: { isExpanded.toggle() }) {
                 HStack(spacing: 8) {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
@@ -25,8 +24,8 @@ struct FileDiffView: View {
                                 .fill(file.stage == .staged ? GitHubDark.stagedBadge : GitHubDark.unstagedBadge)
                         )
 
-                    if let renamedFrom = file.renamedFrom {
-                        Text(renamedFrom)
+                    if case .renamed(let from) = file.changeType {
+                        Text(from)
                             .font(.system(size: 13, weight: .medium, design: .monospaced))
                             .foregroundColor(GitHubDark.textSecondary)
                             .strikethrough(color: GitHubDark.textSecondary)
@@ -39,12 +38,11 @@ struct FileDiffView: View {
                         .font(.system(size: 13, weight: .medium, design: .monospaced))
                         .foregroundColor(GitHubDark.text)
 
-                    if file.isNew {
-                        fileBadge("NEW", color: GitHubDark.additionText)
-                    } else if file.isDeleted {
-                        fileBadge("DELETED", color: GitHubDark.deletionText)
-                    } else if file.renamedFrom != nil {
-                        fileBadge("RENAMED", color: GitHubDark.unstagedBadge)
+                    switch file.changeType {
+                    case .new: fileBadge("NEW", color: GitHubDark.additionText)
+                    case .deleted: fileBadge("DELETED", color: GitHubDark.deletionText)
+                    case .renamed: fileBadge("RENAMED", color: GitHubDark.unstagedBadge)
+                    case .modified: EmptyView()
                     }
 
                     Button(action: {

@@ -25,14 +25,19 @@ struct DiffHunk: Identifiable {
     let lines: [DiffLine]
 }
 
+enum FileChangeType: Equatable {
+    case modified
+    case new
+    case deleted
+    case renamed(from: String)
+}
+
 struct FileDiff: Identifiable {
     let id = UUID()
     let fileName: String
     let hunks: [DiffHunk]
     let stage: DiffStage
-    let isNew: Bool
-    let renamedFrom: String?
-    let isDeleted: Bool
+    let changeType: FileChangeType
 }
 
 struct RepositoryDiff: Identifiable {

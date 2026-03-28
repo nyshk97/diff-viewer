@@ -10,7 +10,6 @@ struct SideBySideDiffView: View {
         VStack(spacing: 0) {
             ForEach(Array(pairs.enumerated()), id: \.offset) { _, pair in
                 HStack(spacing: 0) {
-                    // Left side (old)
                     lineNumberColumn(pair.left?.oldLineNumber ?? pair.left?.newLineNumber)
                     lineContent(pair.left)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -19,7 +18,6 @@ struct SideBySideDiffView: View {
                         .fill(GitHubDark.border)
                         .frame(width: 1)
 
-                    // Right side (new)
                     lineNumberColumn(pair.right?.newLineNumber ?? pair.right?.oldLineNumber)
                     lineContent(pair.right)
                         .frame(maxWidth: .infinity, alignment: .leading)

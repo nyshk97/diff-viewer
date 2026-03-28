@@ -9,7 +9,7 @@ enum GitService {
             let diffFileNames = Set((unstagedFiles + stagedFiles).map { $0.fileName })
             let deletedFiles = fetchDeletedFiles(at: path).filter { !diffFileNames.contains($0.fileName) }
             let untrackedFiles = fetchUntrackedFiles(at: path)
-            let (matched, remainingDeleted, remainingNew) = matchRenames(deleted: deletedFiles, untracked: untrackedFiles, repoPath: path)
+            let (matched, remainingDeleted, remainingNew) = matchRenames(deleted: deletedFiles, untracked: untrackedFiles)
             let files = unstagedFiles + stagedFiles + matched + remainingDeleted + remainingNew
             return RepositoryDiff(name: name, path: path, files: files)
         }
@@ -33,7 +33,7 @@ enum GitService {
 
             guard !diffLines.isEmpty else { return nil }
             let hunk = DiffHunk(header: "@@ -0,0 +1,\(diffLines.count) @@", lines: diffLines)
-            return FileDiff(fileName: fileName, hunks: [hunk], stage: .unstaged, isNew: true, renamedFrom: nil, isDeleted: false)
+            return FileDiff(fileName: fileName, hunks: [hunk], stage: .unstaged, changeType: .new)
         }
     }
 
@@ -44,11 +44,11 @@ enum GitService {
         return output.components(separatedBy: "\n").compactMap { line in
             let fileName = line.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !fileName.isEmpty else { return nil }
-            return FileDiff(fileName: fileName, hunks: [], stage: .unstaged, isNew: false, renamedFrom: nil, isDeleted: true)
+            return FileDiff(fileName: fileName, hunks: [], stage: .unstaged, changeType: .deleted)
         }
     }
 
-    nonisolated private static func matchRenames(deleted: [FileDiff], untracked: [FileDiff], repoPath: String) -> (matched: [FileDiff], remainingDeleted: [FileDiff], remainingNew: [FileDiff]) {
+    nonisolated private static func matchRenames(deleted: [FileDiff], untracked: [FileDiff]) -> (matched: [FileDiff], remainingDeleted: [FileDiff], remainingNew: [FileDiff]) {
         var remainingDeleted = deleted
         var remainingNew = untracked
         var matched: [FileDiff] = []
@@ -59,7 +59,7 @@ enum GitService {
             }) else { continue }
 
             let deletedFile = remainingDeleted[deleteIndex]
-            matched.append(FileDiff(fileName: newFile.fileName, hunks: newFile.hunks, stage: .unstaged, isNew: false, renamedFrom: deletedFile.fileName, isDeleted: false))
+            matched.append(FileDiff(fileName: newFile.fileName, hunks: newFile.hunks, stage: .unstaged, changeType: .renamed(from: deletedFile.fileName)))
             remainingDeleted.remove(at: deleteIndex)
             remainingNew.removeAll { $0.fileName == newFile.fileName }
         }
@@ -88,6 +88,8 @@ enum GitService {
         return String(data: data, encoding: .utf8) ?? ""
     }
 
+    private static let hunkHeaderRegex = try! NSRegularExpression(pattern: #"@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@"#)
+
     nonisolated private static func parseDiff(_ output: String, stage: DiffStage) -> [FileDiff] {
         guard !output.isEmpty else { return [] }
 
@@ -111,8 +113,16 @@ enum GitService {
         func flushFile() {
             flushHunk()
             if let fileName = currentFileName {
-                if !currentHunks.isEmpty || currentRenamedFrom != nil || currentIsDeleted {
-                    files.append(FileDiff(fileName: fileName, hunks: currentHunks, stage: stage, isNew: false, renamedFrom: currentRenamedFrom, isDeleted: currentIsDeleted))
+                let changeType: FileChangeType
+                if let from = currentRenamedFrom {
+                    changeType = .renamed(from: from)
+                } else if currentIsDeleted {
+                    changeType = .deleted
+                } else {
+                    changeType = .modified
+                }
+                if !currentHunks.isEmpty || changeType != .modified {
+                    files.append(FileDiff(fileName: fileName, hunks: currentHunks, stage: stage, changeType: changeType))
                 }
             }
             currentHunks = []
@@ -162,9 +172,7 @@ enum GitService {
     }
 
     nonisolated private static func parseHunkHeader(_ header: String) -> (oldStart: Int, newStart: Int) {
-        let pattern = #"@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@"#
-        guard let regex = try? NSRegularExpression(pattern: pattern),
-              let match = regex.firstMatch(in: header, range: NSRange(header.startIndex..., in: header)),
+        guard let match = hunkHeaderRegex.firstMatch(in: header, range: NSRange(header.startIndex..., in: header)),
               let oldRange = Range(match.range(at: 1), in: header),
               let newRange = Range(match.range(at: 2), in: header),
               let oldStart = Int(header[oldRange]),

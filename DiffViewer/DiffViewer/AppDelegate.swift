@@ -1,7 +1,6 @@
 import AppKit
 import SwiftUI
 import KeyboardShortcuts
-import Carbon.HIToolbox
 
 extension KeyboardShortcuts.Name {
     static let togglePanel = Self("togglePanel", default: .init(.d, modifiers: [.command, .control]))

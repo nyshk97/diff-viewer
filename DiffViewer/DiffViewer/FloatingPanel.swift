@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import SwiftUI
 
 class FloatingPanel: NSPanel {
@@ -18,7 +19,7 @@ class FloatingPanel: NSPanel {
         isMovableByWindowBackground = false
         isReleasedWhenClosed = false
         hidesOnDeactivate = false
-        backgroundColor = NSColor(red: 13/255, green: 17/255, blue: 23/255, alpha: 1)
+        backgroundColor = NSColor(GitHubDark.background)
 
         self.contentView = contentView
 
@@ -39,7 +40,7 @@ class FloatingPanel: NSPanel {
     override var canBecomeMain: Bool { true }
 
     override func keyDown(with event: NSEvent) {
-        if event.keyCode == 53 { // Escape
+        if event.keyCode == kVK_Escape {
             orderOut(nil)
         } else {
             super.keyDown(with: event)

@@ -6,12 +6,11 @@ enum SyntaxHighlighter {
         var result = AttributedString(code)
         result.foregroundColor = GitHubDark.text
 
-        let rules = highlightRules(for: lang)
+        let compiledRules = cachedRules(for: lang)
         let nsCode = code as NSString
 
-        for rule in rules {
-            guard let regex = try? NSRegularExpression(pattern: rule.pattern, options: rule.options) else { continue }
-            let matches = regex.matches(in: code, range: NSRange(location: 0, length: nsCode.length))
+        for rule in compiledRules {
+            let matches = rule.regex.matches(in: code, range: NSRange(location: 0, length: nsCode.length))
             for match in matches {
                 let matchRange = match.range(at: rule.captureGroup)
                 guard let range = Range(matchRange, in: code),
@@ -22,6 +21,28 @@ enum SyntaxHighlighter {
 
         return result
     }
+
+    // MARK: - Compiled Rule Cache
+
+    private struct CompiledRule {
+        let regex: NSRegularExpression
+        let color: Color
+        let captureGroup: Int
+    }
+
+    private static var ruleCache: [Language: [CompiledRule]] = [:]
+
+    private static func cachedRules(for lang: Language) -> [CompiledRule] {
+        if let cached = ruleCache[lang] { return cached }
+        let compiled = highlightRules(for: lang).compactMap { rule -> CompiledRule? in
+            guard let regex = try? NSRegularExpression(pattern: rule.pattern, options: rule.options) else { return nil }
+            return CompiledRule(regex: regex, color: rule.color, captureGroup: rule.captureGroup)
+        }
+        ruleCache[lang] = compiled
+        return compiled
+    }
+
+    // MARK: - Rule Definition
 
     private struct Rule {
         let pattern: String
@@ -37,7 +58,9 @@ enum SyntaxHighlighter {
         }
     }
 
-    private enum Language {
+    // MARK: - Language Detection
+
+    private enum Language: Hashable {
         case swift, ruby, python, javascript, typescript, go, rust, shell, json, yaml, html, css, sql, java, unknown
     }
 
@@ -67,20 +90,20 @@ enum SyntaxHighlighter {
         }
     }
 
-    // Colors matching GitHub Dark theme
-    private static let keyword = Color(red: 255/255, green: 123/255, blue: 114/255)   // red - keywords
-    private static let string = Color(red: 165/255, green: 214/255, blue: 255/255)     // light blue - strings
-    private static let comment = Color(red: 125/255, green: 133/255, blue: 144/255)    // gray - comments
-    private static let number = Color(red: 121/255, green: 192/255, blue: 255/255)     // blue - numbers
-    private static let type = Color(red: 255/255, green: 166/255, blue: 87/255)        // orange - types
-    private static let function = Color(red: 210/255, green: 168/255, blue: 255/255)   // purple - functions
-    private static let variable = Color(red: 121/255, green: 192/255, blue: 255/255)   // blue - variables
-    private static let constant = Color(red: 121/255, green: 192/255, blue: 255/255)   // blue - constants
+    // MARK: - Colors
+
+    private static let keyword = Color(red: 255/255, green: 123/255, blue: 114/255)
+    private static let string = Color(red: 165/255, green: 214/255, blue: 255/255)
+    private static let comment = Color(red: 125/255, green: 133/255, blue: 144/255)
+    private static let blue = Color(red: 121/255, green: 192/255, blue: 255/255)
+    private static let type = Color(red: 255/255, green: 166/255, blue: 87/255)
+    private static let function = Color(red: 210/255, green: 168/255, blue: 255/255)
+
+    // MARK: - Highlight Rules
 
     private static func highlightRules(for lang: Language) -> [Rule] {
         var rules: [Rule] = []
 
-        // Comments (apply first, lowest priority visually but matched first)
         switch lang {
         case .swift, .javascript, .typescript, .go, .rust, .css, .java:
             rules.append(Rule(#"//.*$"#, comment))
@@ -93,14 +116,10 @@ enum SyntaxHighlighter {
         default: break
         }
 
-        // Strings
         rules.append(Rule(#""(?:[^"\\]|\\.)*""#, string))
         rules.append(Rule(#"'(?:[^'\\]|\\.)*'"#, string))
+        rules.append(Rule(#"\b\d+\.?\d*\b"#, blue))
 
-        // Numbers
-        rules.append(Rule(#"\b\d+\.?\d*\b"#, number))
-
-        // Language-specific keywords
         switch lang {
         case .swift:
             rules.append(Rule(#"\b(import|func|var|let|struct|class|enum|protocol|extension|if|else|guard|return|for|in|while|switch|case|default|break|continue|self|Self|nil|true|false|private|public|internal|static|override|init|deinit|throws|throw|try|catch|async|await|some|any|where|typealias|associatedtype|weak|unowned|lazy|mutating|nonmutating|convenience|required|optional|final|open|fileprivate|subscript|defer|repeat|do|is|as|super|willSet|didSet|get|set|inout|operator|precedencegroup|indirect)\b"#, keyword))
@@ -108,8 +127,8 @@ enum SyntaxHighlighter {
             rules.append(Rule(#"@\w+"#, type))
         case .ruby:
             rules.append(Rule(#"\b(def|end|class|module|if|elsif|else|unless|while|until|for|do|begin|rescue|ensure|raise|return|yield|require|require_relative|include|extend|attr_accessor|attr_reader|attr_writer|self|nil|true|false|and|or|not|in|then|when|case|super|puts|print|p)\b"#, keyword))
-            rules.append(Rule(#":[a-zA-Z_]\w*"#, constant))
-            rules.append(Rule(#"@\w+"#, variable))
+            rules.append(Rule(#":[a-zA-Z_]\w*"#, blue))
+            rules.append(Rule(#"@\w+"#, blue))
         case .python:
             rules.append(Rule(#"\b(def|class|if|elif|else|for|while|return|import|from|as|try|except|finally|raise|with|yield|lambda|pass|break|continue|and|or|not|is|in|None|True|False|self|print|len|range|type|super|async|await)\b"#, keyword))
         case .javascript, .typescript:
@@ -122,13 +141,13 @@ enum SyntaxHighlighter {
             rules.append(Rule(#"\b[A-Z][A-Za-z0-9]*\b"#, type))
         case .shell:
             rules.append(Rule(#"\b(if|then|else|elif|fi|for|while|do|done|case|esac|in|function|return|exit|echo|read|set|unset|export|local|source|alias|cd|ls|rm|cp|mv|mkdir|grep|sed|awk|cat|chmod|chown|sudo|apt|brew|git|curl|wget)\b"#, keyword))
-            rules.append(Rule(#"\$[A-Za-z_]\w*"#, variable))
-            rules.append(Rule(#"\$\{[^}]+\}"#, variable))
+            rules.append(Rule(#"\$[A-Za-z_]\w*"#, blue))
+            rules.append(Rule(#"\$\{[^}]+\}"#, blue))
         case .json:
             rules.append(Rule(#"\b(true|false|null)\b"#, keyword))
         case .yaml:
             rules.append(Rule(#"^[A-Za-z_][A-Za-z0-9_]*:"#, keyword))
-            rules.append(Rule(#"\b(true|false|null|yes|no)\b"#, constant))
+            rules.append(Rule(#"\b(true|false|null|yes|no)\b"#, blue))
         case .html:
             rules.append(Rule(#"</?[a-zA-Z][a-zA-Z0-9]*"#, keyword))
             rules.append(Rule(#"/?>"#, keyword))
@@ -144,7 +163,6 @@ enum SyntaxHighlighter {
         default: break
         }
 
-        // Function calls (after keywords to not override)
         if lang != .json && lang != .yaml && lang != .unknown {
             rules.append(Rule(#"\b([a-zA-Z_]\w*)\s*\("#, function, captureGroup: 1))
         }

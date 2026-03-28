@@ -15,12 +15,8 @@ brew install nyshk97/tap/diff-viewer
 
 Add the paths of the repositories you want to monitor to the config file.
 
-```
-mkdir -p ~/.config/diff-viewer
-```
-
 ```json
-// ~/.config/diff-viewer/config.json
+// ~/.diffviewer
 {
   "repositories": [
     "/Users/you/project-a",

@@ -11,7 +11,7 @@ struct Config: Codable, Sendable {
     let shortcut: ShortcutConfig?
 }
 
-let configPath = NSString("~/.config/diff-viewer/config.json").expandingTildeInPath
+let configPath = NSString("~/.diffviewer").expandingTildeInPath
 
 enum ConfigService {
     nonisolated static func load() throws -> Config {

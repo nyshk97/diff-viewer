@@ -30,6 +30,7 @@ struct FileDiff: Identifiable {
     let fileName: String
     let hunks: [DiffHunk]
     let stage: DiffStage
+    let isNew: Bool
 }
 
 struct RepositoryDiff: Identifiable {

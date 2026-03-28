@@ -65,8 +65,7 @@ enum SyntaxHighlighter {
     }
 
     private static func detectLanguage(from fileName: String) -> Language {
-        let cleanName = fileName.replacingOccurrences(of: " (new)", with: "")
-        let ext = (cleanName as NSString).pathExtension.lowercased()
+        let ext = (fileName as NSString).pathExtension.lowercased()
         switch ext {
         case "swift": return .swift
         case "rb", "rake", "gemspec": return .ruby
@@ -83,7 +82,7 @@ enum SyntaxHighlighter {
         case "java": return .java
         case "sql": return .sql
         default:
-            let name = (cleanName as NSString).lastPathComponent
+            let name = (fileName as NSString).lastPathComponent
             if name == "Brewfile" || name == "Gemfile" || name == "Rakefile" { return .ruby }
             if name == "Dockerfile" || name == "Makefile" { return .shell }
             return .unknown

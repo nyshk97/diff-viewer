@@ -29,8 +29,20 @@ struct FileDiffView: View {
                         .font(.system(size: 13, weight: .medium, design: .monospaced))
                         .foregroundColor(GitHubDark.text)
 
+                    if file.isNew {
+                        Text("NEW")
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(GitHubDark.additionText)
+                            )
+                    }
+
                     Button(action: {
-                        let pathToCopy = file.fileName.replacingOccurrences(of: " (new)", with: "")
+                        let pathToCopy = file.fileName
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(pathToCopy, forType: .string)
                         showCopied = true

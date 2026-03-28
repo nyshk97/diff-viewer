@@ -30,7 +30,7 @@ enum GitService {
 
             guard !diffLines.isEmpty else { return nil }
             let hunk = DiffHunk(header: "@@ -0,0 +1,\(diffLines.count) @@", lines: diffLines)
-            return FileDiff(fileName: fileName + " (new)", hunks: [hunk], stage: .unstaged)
+            return FileDiff(fileName: fileName, hunks: [hunk], stage: .unstaged, isNew: true)
         }
     }
 
@@ -76,7 +76,7 @@ enum GitService {
         func flushFile() {
             flushHunk()
             if let fileName = currentFileName, !currentHunks.isEmpty {
-                files.append(FileDiff(fileName: fileName, hunks: currentHunks, stage: stage))
+                files.append(FileDiff(fileName: fileName, hunks: currentHunks, stage: stage, isNew: false))
             }
             currentHunks = []
             currentFileName = nil

@@ -23,6 +23,9 @@ struct DiffViewerApp: App {
                 NSWorkspace.shared.open(url)
             }
             Divider()
+            let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+            Text("Version \(version)")
+            Divider()
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }

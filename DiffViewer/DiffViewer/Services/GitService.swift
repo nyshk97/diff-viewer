@@ -24,16 +24,20 @@ enum GitService {
             guard !fileName.isEmpty else { return nil }
 
             let filePath = (repoPath as NSString).appendingPathComponent(fileName)
-            guard let content = try? String(contentsOfFile: filePath, encoding: .utf8) else { return nil }
 
-            let contentLines = content.components(separatedBy: "\n")
-            let diffLines = contentLines.enumerated().map { index, text in
-                DiffLine(oldLineNumber: nil, newLineNumber: index + 1, content: text, type: .addition)
+            if let content = try? String(contentsOfFile: filePath, encoding: .utf8) {
+                let contentLines = content.components(separatedBy: "\n")
+                let diffLines = contentLines.enumerated().map { index, text in
+                    DiffLine(oldLineNumber: nil, newLineNumber: index + 1, content: text, type: .addition)
+                }
+                guard !diffLines.isEmpty else { return nil }
+                let hunk = DiffHunk(header: "@@ -0,0 +1,\(diffLines.count) @@", lines: diffLines)
+                return FileDiff(fileName: fileName, hunks: [hunk], stage: .unstaged, changeType: .new)
+            } else {
+                let diffLines = [DiffLine(oldLineNumber: nil, newLineNumber: 1, content: "(binary file)", type: .addition)]
+                let hunk = DiffHunk(header: "@@ -0,0 +1,1 @@", lines: diffLines)
+                return FileDiff(fileName: fileName, hunks: [hunk], stage: .unstaged, changeType: .new)
             }
-
-            guard !diffLines.isEmpty else { return nil }
-            let hunk = DiffHunk(header: "@@ -0,0 +1,\(diffLines.count) @@", lines: diffLines)
-            return FileDiff(fileName: fileName, hunks: [hunk], stage: .unstaged, changeType: .new)
         }
     }
 

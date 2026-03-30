@@ -109,7 +109,9 @@ struct FileDiffView: View {
                     .fill(GitHubDark.border)
                     .frame(height: 1)
 
-                if isLoadingFullFile {
+                if file.isImageFile {
+                    ImagePreviewView(file: file, repoPath: repoPath)
+                } else if isLoadingFullFile {
                     ProgressView()
                         .frame(maxWidth: .infinity, minHeight: 40)
                         .background(GitHubDark.background)

@@ -38,6 +38,13 @@ struct FileDiff: Identifiable {
     let hunks: [DiffHunk]
     let stage: DiffStage
     let changeType: FileChangeType
+
+    private static let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "tiff", "tif", "ico", "heic", "heif"]
+
+    var isImageFile: Bool {
+        let ext = (fileName as NSString).pathExtension.lowercased()
+        return Self.imageExtensions.contains(ext)
+    }
 }
 
 struct RepositoryDiff: Identifiable {

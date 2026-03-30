@@ -205,6 +205,28 @@ enum GitService {
         return []
     }
 
+    nonisolated static func showFileData(fileName: String, repoPath: String) -> Data? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        process.arguments = ["-C", repoPath, "show", "HEAD:\(fileName)"]
+        process.environment = ["HOME": NSHomeDirectory()]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch {
+            return nil
+        }
+
+        guard process.terminationStatus == 0 else { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        return data.isEmpty ? nil : data
+    }
+
     nonisolated private static func parseHunkHeader(_ header: String) -> (oldStart: Int, newStart: Int) {
         guard let match = hunkHeaderRegex.firstMatch(in: header, range: NSRange(header.startIndex..., in: header)),
               let oldRange = Range(match.range(at: 1), in: header),

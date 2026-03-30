@@ -74,7 +74,7 @@ enum GitService {
     nonisolated private static func runGit(_ args: [String], at path: String) -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
-        process.arguments = ["-C", path] + args
+        process.arguments = ["-C", path, "-c", "core.quotepath=false"] + args
         process.environment = ["HOME": NSHomeDirectory()]
 
         let pipe = Pipe()

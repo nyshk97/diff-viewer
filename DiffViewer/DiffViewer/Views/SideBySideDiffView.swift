@@ -7,7 +7,7 @@ struct SideBySideDiffView: View {
     var body: some View {
         let pairs = buildSideBySidePairs(hunk.lines)
 
-        VStack(spacing: 0) {
+        LazyVStack(spacing: 0) {
             ForEach(Array(pairs.enumerated()), id: \.offset) { _, pair in
                 HStack(spacing: 0) {
                     lineNumberColumn(pair.left?.oldLineNumber ?? pair.left?.newLineNumber)

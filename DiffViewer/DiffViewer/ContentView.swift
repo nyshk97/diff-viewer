@@ -17,7 +17,7 @@ struct ContentView: View {
                 EmptyStateView(message: "変更なし")
             } else {
                 ScrollView {
-                    VStack(spacing: 24) {
+                    LazyVStack(spacing: 24) {
                         ForEach(viewModel.repositories.filter(\.hasChanges)) { repo in
                             RepositorySection(repository: repo)
                         }

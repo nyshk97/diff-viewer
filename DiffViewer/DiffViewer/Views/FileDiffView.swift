@@ -117,7 +117,7 @@ struct FileDiffView: View {
                         .background(GitHubDark.background)
                 } else {
                     let hunksToShow = showFullFile ? (fullFileHunks ?? file.hunks) : file.hunks
-                    VStack(spacing: 0) {
+                    LazyVStack(spacing: 0) {
                         ForEach(hunksToShow) { hunk in
                             SideBySideDiffView(hunk: hunk, fileName: file.fileName)
                         }

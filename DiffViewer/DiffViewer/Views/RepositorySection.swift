@@ -19,7 +19,7 @@ struct RepositorySection: View {
             }
             .padding(.horizontal, 4)
 
-            // File diffs
+            // File diffs (LazyVStack is used in parent)
             ForEach(repository.files) { file in
                 FileDiffView(file: file, repoPath: repository.path)
             }

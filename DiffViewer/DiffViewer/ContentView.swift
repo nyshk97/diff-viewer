@@ -67,35 +67,39 @@ struct RepositoryTab: View {
     let fileCount: Int
     let isSelected: Bool
     let action: () -> Void
+    @State private var isHovered = false
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: "folder.fill")
-                    .font(.system(size: 11))
-                Text(name)
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                Text("\(fileCount)")
-                    .font(.system(size: 11, design: .monospaced))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 1)
-                    .background(
-                        Capsule()
-                            .fill(isSelected ? GitHubDark.text.opacity(0.15) : GitHubDark.textSecondary.opacity(0.15))
-                    )
-            }
-            .foregroundColor(isSelected ? GitHubDark.text : GitHubDark.textSecondary)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .overlay(alignment: .bottom) {
-                if isSelected {
-                    Rectangle()
-                        .fill(Color(red: 210/255, green: 153/255, blue: 34/255))
-                        .frame(height: 2)
-                        .offset(y: 1)
-                }
+        HStack(spacing: 6) {
+            Image(systemName: "folder.fill")
+                .font(.system(size: 11))
+            Text(name)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+            Text("\(fileCount)")
+                .font(.system(size: 11, design: .monospaced))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 1)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? GitHubDark.text.opacity(0.15) : GitHubDark.textSecondary.opacity(0.15))
+                )
+        }
+        .foregroundColor(isSelected || isHovered ? GitHubDark.text : GitHubDark.textSecondary)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+        .background(isHovered && !isSelected ? GitHubDark.text.opacity(0.05) : Color.clear)
+        .overlay(alignment: .bottom) {
+            if isSelected {
+                Rectangle()
+                    .fill(Color(red: 210/255, green: 153/255, blue: 34/255))
+                    .frame(height: 2)
+                    .offset(y: 1)
             }
         }
-        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .onTapGesture(perform: action)
     }
 }

@@ -2,7 +2,7 @@ import AppKit
 import Carbon.HIToolbox
 import SwiftUI
 
-class FloatingPanel: NSPanel {
+class FloatingPanel: NSPanel, NSWindowDelegate {
     init(contentView: NSView) {
         super.init(
             contentRect: .zero,
@@ -22,6 +22,7 @@ class FloatingPanel: NSPanel {
         backgroundColor = NSColor(GitHubDark.background)
 
         self.contentView = contentView
+        self.delegate = self
 
         centerOnScreen()
     }
@@ -45,6 +46,10 @@ class FloatingPanel: NSPanel {
         } else {
             super.keyDown(with: event)
         }
+    }
+
+    func windowDidResignKey(_ notification: Notification) {
+        orderOut(nil)
     }
 
 }

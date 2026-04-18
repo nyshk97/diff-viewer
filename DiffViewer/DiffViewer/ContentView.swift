@@ -4,7 +4,7 @@ struct ContentView: View {
     var viewModel: DiffViewModel
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack {
             GitHubDark.background.ignoresSafeArea()
 
             if viewModel.isLoading {
@@ -31,7 +31,8 @@ struct ContentView: View {
                     }
                 }
             }
-
+        }
+        .overlay(alignment: .topTrailing) {
             ReloadButton(viewModel: viewModel)
                 .padding(.top, 8)
                 .padding(.trailing, 12)

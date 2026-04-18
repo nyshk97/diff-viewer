@@ -4,7 +4,7 @@ struct ContentView: View {
     var viewModel: DiffViewModel
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topTrailing) {
             GitHubDark.background.ignoresSafeArea()
 
             if viewModel.isLoading {
@@ -31,7 +31,49 @@ struct ContentView: View {
                     }
                 }
             }
+
+            ReloadButton(viewModel: viewModel)
+                .padding(.top, 8)
+                .padding(.trailing, 12)
         }
+        .background {
+            Button(action: { viewModel.loadDiffs() }) {
+                EmptyView()
+            }
+            .keyboardShortcut("r", modifiers: .command)
+            .opacity(0)
+        }
+    }
+}
+
+struct ReloadButton: View {
+    var viewModel: DiffViewModel
+    @State private var isHovered = false
+    @State private var rotation: Double = 0
+
+    var body: some View {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.4)) {
+                rotation += 360
+            }
+            viewModel.loadDiffs()
+        }) {
+            Image(systemName: "arrow.clockwise")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(isHovered ? GitHubDark.text : GitHubDark.textSecondary)
+                .rotationEffect(.degrees(rotation))
+                .frame(width: 28, height: 28)
+                .background(
+                    Circle()
+                        .fill(isHovered ? GitHubDark.text.opacity(0.08) : Color.clear)
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isLoading)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .help("再読み込み (⌘R)")
     }
 }
 

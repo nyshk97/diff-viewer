@@ -17,6 +17,18 @@ cd DiffViewer && xcodebuild -scheme DiffViewer -configuration Debug build 2>&1 |
 
 `** BUILD SUCCEEDED **` が出力されること。
 
+## 配布物のビルド確認
+
+```bash
+mise run build
+```
+
+`==> Done: <repo>/build/DiffViewer.zip` と SHA256 が出力されること（Release archive → export → zip まで通る）。
+
+`mise run install` は `/Applications/DiffViewer.app` を置き換える。`mise run release <version>` は
+**実行すると GitHub Release が即公開される**ので、導線の確認だけなら `mise run release --help` で
+引数の解釈（`<version>` が必須）を見るに留める。
+
 ## UI の動作確認（手動）
 
 XCUITest は以下の理由で使えないため、UI の確認は手動で行う。

@@ -1,0 +1,15 @@
+[tools]
+# Xcode/Swift 系はシステム標準を使う前提（mise で固定しない）
+
+[tasks.build]
+description = "Release ビルド（archive → export → build/DiffViewer.zip を作成し SHA256 を表示）"
+run = "./scripts/build.sh"
+
+[tasks.install]
+description = "build/DiffViewer.zip を /Applications/DiffViewer.app に置き換える（zip が無ければ build.sh を自動実行するので build タスクは不要）"
+run = "./scripts/install.sh"
+
+[tasks.release]
+description = "GitHub Release を作成して公開する。引数: <version>。**実行すると即公開される**。zip が無ければ build.sh を自動実行するので build タスクは不要"
+usage = 'arg "<version>" help="リリースするバージョン（例: 1.0.0）。タグは v<version> になる"'
+run = './scripts/release.sh "$usage_version"'

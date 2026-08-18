@@ -2,14 +2,18 @@
 # Xcode/Swift 系はシステム標準を使う前提（mise で固定しない）
 
 [tasks.build]
-description = "Release ビルド（archive → export → build/DiffViewer.zip を作成し SHA256 を表示）"
+description = "配布用ビルド（Release archive → export → Developer ID 署名 → notarize → staple → build/DiffViewer.zip）。数分かかる"
 run = "./scripts/build.sh"
 
+[tasks."build:sign-only"]
+description = "署名まわりだけ確認する（notarize を飛ばして署名検証で終了。配布 ZIP は作らない）"
+run = "./scripts/build.sh --skip-notarize"
+
 [tasks.install]
-description = "build/DiffViewer.zip を /Applications/DiffViewer.app に置き換える（zip が無ければ build.sh を自動実行するので build タスクは不要）"
+description = "ビルドし直して /Applications/DiffViewer.app を置き換える（notarize なし。起動中のアプリは終了してから差し替え、起動確認まで行う）"
 run = "./scripts/install.sh"
 
 [tasks.release]
-description = "GitHub Release を作成して公開する。引数: <version>。**実行すると即公開される**。zip が無ければ build.sh を自動実行するので build タスクは不要"
+description = "GitHub Release を作成して公開する。引数: <version>。**実行すると即公開される**。毎回ビルド（署名 + notarize）からやり直す"
 usage = 'arg "<version>" help="リリースするバージョン（例: 1.0.0）。タグは v<version> になる"'
 run = './scripts/release.sh "$usage_version"'
